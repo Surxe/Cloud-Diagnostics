@@ -1,4 +1,5 @@
 /src/private/smtp_credentials.txt
+/src/logs/timestamp.txt
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

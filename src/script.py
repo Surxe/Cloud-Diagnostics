@@ -37,10 +37,6 @@ def send_email(error_code, error_message):
     smtp_credentials_file = './src/private/smtp_credentials.txt'
 
     try:
-        # If credentials file does not exist, end program and refer user to the template
-        if not os.path.exists(smtp_credentials_file):
-            print(f"Email could not be sent as SMTP credentials file was not found. Please create it at {smtp_credentials_file} with your SMTP credentials in the format shown in /src/private/smtp_credentials_template.txt.")
-            return
         with open(smtp_credentials_file) as f:
             smtp_username = ''
             smtp_password = ''
@@ -62,6 +58,12 @@ def send_email(error_code, error_message):
 
 # Main function to monitor and send email
 def main():
+    # If credentials file does not exist, end program and refer user to the template
+    smtp_credentials_file = './src/private/smtp_credentials.txt'
+    if not os.path.exists(smtp_credentials_file):
+        print(f"Email could not be sent as SMTP credentials file was not found. Please create it at {smtp_credentials_file} with your SMTP credentials in the format shown in /src/private/smtp_credentials_template.txt.")
+        return
+
     # Directory to store last email timestamp
     log_directory = './src/logs'
     os.makedirs(log_directory, exist_ok=True)
