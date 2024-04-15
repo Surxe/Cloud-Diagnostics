@@ -6,6 +6,10 @@ import os
 
 # URL to monitor
 url_to_monitor = 'HTTP://18.220.54.59'
+#smtp_credentials_file = 'src/private/smtp_credentials.txt'
+script_directory = os.path.dirname(os.path.abspath(__file__))
+smtp_credentials_file = os.path.join(script_directory, 'private', 'smtp_credentials.txt')
+log_directory = os.path.join(script_directory, 'logs')
 
 # Function to check the URL
 def check_url(url):
@@ -19,23 +23,18 @@ def check_url(url):
 
 # Function to send email
 def send_email(error_code, error_message):
-    sender_email = 'your.server.is.down.24hrs@gmail.com'
     receiver_email = 'your.server.is.down.24hrs@gmail.com'
     subject = f"Web Server Error {error_code}"
     body = f"Error {error_code}, {error_message}, detected {datetime.now().strftime('%d %b. %Y, %I:%M%p %Z')}"
     
     message = MIMEText(body)
     message['Subject'] = subject
-    message['From'] = sender_email
     message['To'] = receiver_email
     
     smtp_server = 'smtp.gmail.com'
     smtp_port = 587
-    smtp_username = 'your.server.is.down.24hrs@gmail.com'
-    smtp_password = 'bmtb dkld rewc mjcx'
-    # Add your own username and password to ./src/private/smtp_credentials.txt in the format shown in /src/private/smtp_credentials_template.txt:
-    smtp_credentials_file = './src/private/smtp_credentials.txt'
 
+    # Send email
     try:
         with open(smtp_credentials_file) as f:
             smtp_username = ''
@@ -47,10 +46,11 @@ def send_email(error_code, error_message):
                 elif key.strip() == 'password':
                     smtp_password = value.strip()
     
+        message['From'] = smtp_username
         server = smtplib.SMTP(smtp_server, smtp_port)
         server.starttls()
         server.login(smtp_username, smtp_password)
-        server.sendmail(sender_email, receiver_email, message.as_string())
+        server.sendmail(smtp_username, receiver_email, message.as_string())
         server.quit()
         print("Email notification sent successfully.")
     except Exception as e:
@@ -59,13 +59,11 @@ def send_email(error_code, error_message):
 # Main function to monitor and send email
 def main():
     # If credentials file does not exist, end program and refer user to the template
-    smtp_credentials_file = './src/private/smtp_credentials.txt'
     if not os.path.exists(smtp_credentials_file):
-        print(f"Email could not be sent as SMTP credentials file was not found. Please create it at {smtp_credentials_file} with your SMTP credentials in the format shown in /src/private/smtp_credentials_template.txt.")
+        print(f"Please create SMTP credentials file at {smtp_credentials_file} with your SMTP credentials in the format shown in /src/private/smtp_credentials_template.txt.")
         return
 
     # Directory to store last email timestamp
-    log_directory = './src/logs'
     os.makedirs(log_directory, exist_ok=True)
     log_file = os.path.join(log_directory, 'timestamp.txt')
 
@@ -84,7 +82,7 @@ def main():
     is_up, error_code = check_url(url_to_monitor)
 
     # Determine time threshold for email notification
-    time_threshold_hours = 1
+    time_threshold_hours = 23
     current_time = datetime.now().isoformat()
     if timestamp == '':
         exceeds_time_threshold = False
@@ -109,17 +107,26 @@ def main():
     else:
         new_log_text = '' #server is online so log doesnt matter, make it empty
 
-    # Save the new log text to file
+    # Save the new log text to file for debugging
     with open(log_file, 'w') as f:
         f.write(new_log_text)
 
+    # output = f"Web server is up?: {is_up}\n" \
+    #          f"Response code: {error_code}\n" \
+    #          f"Current timestamp: {timestamp}\n" \
+    #          f"New timestamp: {new_log_text}\n" \
+    #          f"Has it been {time_threshold_hours} hours since the server went down? {exceeds_time_threshold}\n"
+    # # Write output to logs
+    # with open(os.path.join(log_directory, 'output.txt'), 'a') as f:
+    #     f.write(output)
+
     # Debugging
-    print(f"Web server is up?: {is_up}", 
-          f"Response code: {error_code}", 
-          f"Current timestamp: {timestamp}",
-          f"New timestamp: {new_log_text}",
-          f"Has it been {time_threshold_hours} hours since the server went down? {exceeds_time_threshold}", 
-          sep='\n', end='\n\n')
+    # print(f"Web server is up?: {is_up}", 
+    #       f"Response code: {error_code}", 
+    #       f"Current timestamp: {timestamp}",
+    #       f"New timestamp: {new_log_text}",
+    #       f"Has it been {time_threshold_hours} hours since the server went down? {exceeds_time_threshold}", 
+    #       sep='\n', end='\n\n')
 
 if __name__ == "__main__":
     main()
